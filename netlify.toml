@@ -9,3 +9,5 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  REACT_APP_SUPABASE_URL = "https://atlnnhkgxshsncocpjzi.supabase.co"
+  REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0bG5uaGtneHNoc25jb2NwanppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMjYwMzAsImV4cCI6MjA3MTcwMjAzMH0.o4ln7c731L8GcxupkHHjysqOzfMl0jIkLQF5ZM_iWtU"
