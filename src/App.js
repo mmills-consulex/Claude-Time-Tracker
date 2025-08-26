@@ -1,4 +1,192 @@
-onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
+import { 
+  Clock, 
+  Briefcase, 
+  Users, 
+  DollarSign, 
+  Plus, 
+  X, 
+  LogOut, 
+  Loader2, 
+  CheckCircle 
+} from 'lucide-react';
+
+const App = () => {
+  // State declarations
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [authView, setAuthView] = useState('signin');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authForm, setAuthForm] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    company: ''
+  });
+  const [currentView, setCurrentView] = useState('overview');
+  const [projects, setProjects] = useState([]);
+  const [personnel, setPersonnel] = useState([]);
+  const [timeEntries, setTimeEntries] = useState([]);
+  const [showProjectSetup, setShowProjectSetup] = useState(false);
+  const [showAddPersonnel, setShowAddPersonnel] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: '',
+    client: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    budgetType: 'hours',
+    budgetHours: '',
+    budgetCost: ''
+  });
+  const [newPersonnel, setNewPersonnel] = useState({
+    name: '',
+    role: '',
+    rate: '',
+    email: '',
+    department: ''
+  });
+
+  // Helper functions
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount || 0);
+  };
+
+  const getProjectStats = () => {
+    // Add your project stats logic here
+    return {};
+  };
+
+  const getAdvancedAnalytics = () => {
+    return {
+      activeProjectsCount: projects.filter(p => p.status === 'active').length,
+      portfolioValue: projects.reduce((sum, p) => sum + (parseFloat(p.budgetCost) || 0), 0)
+    };
+  };
+
+  // Event handlers
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserProfile(null);
+  };
+
+  const addProject = () => {
+    if (!newProject.name) return;
+    const project = {
+      id: Date.now(),
+      ...newProject,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+    setProjects([...projects, project]);
+    setNewProject({
+      name: '',
+      client: '',
+      description: '',
+      startDate: '',
+      endDate: '',
+      budgetType: 'hours',
+      budgetHours: '',
+      budgetCost: ''
+    });
+    setShowProjectSetup(false);
+  };
+
+  const addPersonnel = () => {
+    if (!newPersonnel.name || !newPersonnel.role || !newPersonnel.rate) return;
+    const person = {
+      id: Date.now(),
+      ...newPersonnel,
+      createdAt: new Date().toISOString()
+    };
+    setPersonnel([...personnel, person]);
+    setNewPersonnel({
+      name: '',
+      role: '',
+      rate: '',
+      email: '',
+      department: ''
+    });
+    setShowAddPersonnel(false);
+  };
+
+  // Auth check effect
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // If not authenticated, show auth form
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div className="p-8">
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Clock className="text-blue-600" size={32} />
+                <h1 className="text-2xl font-bold text-gray-900">Project Tracker Pro</h1>
+              </div>
+              <p className="text-gray-600">Professional project management system</p>
+            </div>
+
+            {authView === 'signin' && (
+              <form onSubmit={(e) => e.preventDefault()}>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">Sign In</h2>
+                
+                <div className="space-y-4">
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    value={authForm.email}
+                    onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={authForm.password}
+                    onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  {authLoading ? <Loader2 className="animate-spin mx-auto" size={16} /> : 'Sign In'}
+                </button>
+              </form>
+            )}
+
+            {authView === 'forgot' && (
+              <form onSubmit={(e) => e.preventDefault()}>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">Reset Password</h2>
+                
+                <div className="space-y-4">
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={authForm.email}
+                      // Your original onChange code starts here:
+                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter your email"
                     />
